@@ -1,0 +1,269 @@
+/**
+ * Robot Control Library
+ * for NXC robot with two active wheels and one passive caster wheel
+ *
+ * This library defines essential subroutines which allow to control robot's movement,
+ * orientation, speed, ball collecting belt and other robot's features.
+ * This is not a functioning solution, it is meant to be included in a different
+ * program, which will utilise it's functions to move the robot.
+ *
+ * (Created as part of 5CCS2RGP Robotic Group Project module at King's College London)
+ *
+ * @copyright   Copyright (c) 2013 Tomas Vitek, Josh Manuncia, Oluwasheun Adebari
+ * @author      Tomas Vitek ~ http://tomasvitek.com
+ * @link        https://github.com/tomikvitek/NXC-Robot-Controllers
+ * @link        http://www.kcl.ac.uk/nms/depts/informatics/study/current/handbook/Progs/Modules/5CCS2RGP.aspx
+ */
+
+/**
+ * PROPERTIES
+ */
+
+// Motors
+#define LEFT_MOTOR   OUT_C
+#define RIGHT_MOTOR  OUT_A
+#define BOTH_MOTORS  OUT_AC
+#define BELT_MOTOR   OUT_B
+
+// Sensors
+// #define SonarSensor    IN_1
+#define UNLOAD_SENSOR   IN_2
+#define COLLECT_SENSOR  IN_3
+
+// Library settings
+#define WHEEL_CIRCUMFERENCE    256
+
+#define BACK_SPEED_FAST    	   85
+#define BACK_SPEED_SLOW    	   40
+
+#define FORWARD_SPEED_FAST     80
+#define FORWARD_SPEED_MEDIUM   65
+#define FORWARD_SPEED_SLOW     45
+
+#define BALL_COLLECTED_WAIT    500
+
+#define UNLOAD_SLAM_COUNT      2
+#define UNLOAD_SLAM_DISTANCE   15
+#define UNLOAD_WAIT			       2000
+
+#define COUNTING_PAUSE	       2500
+
+
+/**
+ * STATE VARIABLES
+ */
+
+int ballsCollected = 0;
+
+
+/**
+ * CONTROL SUBRUTINES
+ */
+
+/**
+ * Makes robot go forward until stopped
+ *
+ * @param  speed Speed (0 - 100)
+ */
+sub GoForward(int speed)
+{
+  OnFwdSync(BOTH_MOTORS, speed, 0);
+}
+
+/**
+ * Makes robot go backwards until stopped
+ *
+ * @param  speed Speed (0 - 100)
+ */
+sub GoBack(int speed)
+{
+  GoForward(-1 * speed);
+}
+
+/**
+ * Stop the robot
+ */
+sub StopWheels()
+{
+  Off(RIGHT_MOTOR);
+  Off(LEFT_MOTOR);
+}
+
+/**
+ * Moves the robot forward/backwards certain distance
+ *
+ * @param  distance Distance in cm. Positive moves forward, negative backwards.
+ */
+sub GoDistance(int distance)
+{
+  int degrees = 360 * distance * 10 / WHEEL_CIRCUMFERENCE;
+  RotateMotorEx(BOTH_MOTORS, FORWARD_SPEED_MEDIUM, degrees, 0, true, true);
+  StopWheels();
+}
+
+/**
+ * Turns robot by given angle.
+ * (Needs to be calibrated for used surface.)
+ *
+ * @param  degrees  Angle in degrees. Positive turns to left, negative to right.
+ */
+sub Turn(int degrees)
+{
+  if (degrees < 0) degrees = (-1) * degrees * 173 / 100;
+  else degrees = (-1) * degrees * 198 / 100;
+
+  int ratio = 100;
+  if (degrees < 0) ratio = -100;
+
+  RotateMotorEx(BOTH_MOTORS, 60, degrees, ratio, true, true);
+  StopWheels();
+}
+
+/**
+ * Turn left wheel on
+ */
+sub LeftWheelOn()
+{
+  OnFwd(LEFT_MOTOR, 100);
+}
+
+/**
+ * Turn right wheel on
+ */
+sub RightWheelOn()
+{
+  OnFwd(RIGHT_MOTOR, 100);
+}
+
+/**
+ * Turn collecting belt on
+ */
+sub BeltOn()
+{
+  OnFwd(BELT_MOTOR, 100);
+}
+
+/**
+ * Stop collecting belt
+ */
+sub BeltOff()
+{
+  Off(BELT_MOTOR);
+}
+
+/**
+ * Aligns the robot against a wall
+ */
+sub AlignToWall()
+{
+  GoForward(FORWARD_SPEED_FAST);
+  Wait(500);
+  StopWheels();
+
+  LeftWheelOn();
+  Wait(500);
+  StopWheels();
+
+  RightWheelOn();
+  Wait(500);
+  StopWheels();
+}
+
+/**
+ * Moves the robot to side
+ * (When it is stuck in a corner)
+ */
+sub MoveToSide()
+{
+  for (int i = 0; i < 1; i++) {
+    GoDistance(-11);
+    StopWheels();
+
+    RightWheelOn();
+    Wait(200);
+    StopWheels();
+
+    GoDistance(8);
+    StopWheels();
+
+    AlignToWall();
+  }
+}
+
+/**
+ * Unloads balls, when it is aligned to the ball container
+ */
+sub Unload()
+{
+  SetSensorTouch(UNLOAD_SENSOR);
+  GoBack(BACK_SPEED_FAST);
+  while (true) {
+    if (Sensor(UNLOAD_SENSOR) != 1) {
+      GoBack(BACK_SPEED_SLOW);
+      Wait(UNLOAD_WAIT);
+
+      for (int i = 0; i < UNLOAD_SLAM_COUNT; i++) {
+	      StopWheels();
+        GoDistance(UNLOAD_SLAM_DISTANCE);
+
+        StopWheels();
+        GoBack(BACK_SPEED_FAST);
+
+        while (true) {
+          if (Sensor(UNLOAD_SENSOR) != 1) break;
+        }
+
+        GoBack(BACK_SPEED_SLOW);
+        Wait(UNLOAD_WAIT);
+      }
+			StopWheels();
+      break;
+    }
+  }
+}
+
+/**
+ * Print a current ball count on a robot's display
+ */
+sub PrintBallsCount()
+{
+   ClearScreen();
+   string output = "Balls: ";
+   string number = NumToStr(ballsCollected);
+   strcat(output, number);
+   TextOut(5, LCD_LINE1, output);
+}
+
+/**
+ * Task counting number of balls collected
+ * (using a touch sensor)
+ */
+task Count()
+{
+  SetSensorTouch(COLLECT_SENSOR);
+
+  PrintBallsCount();
+
+  while (true) {
+    while (true) {
+      if (Sensor(COLLECT_SENSOR) == 1) break;
+    }
+	  ballsCollected++;
+    PrintBallsCount();
+    // Play a sound
+    PlayFileEx("yay.rso", 4, false);
+    Wait(COUNTING_PAUSE);
+  }
+}
+
+/**
+ * Makes the robot to continue in whatever
+ * it is doing until next ball is collected
+ */
+sub WaitForNextBall()
+{
+  int ballsCount = ballsCollected;
+  while (ballsCollected < ballsCount + 1) {}
+  StopWheels();
+  Wait(BALL_COLLECTED_WAIT);
+}

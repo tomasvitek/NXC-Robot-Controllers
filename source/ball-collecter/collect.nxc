@@ -1,0 +1,199 @@
+/**
+ * NXC Ball Collector
+ *
+ * This program was created as a solution to a given map with known positions
+ * of all balls. The main aim of the program was to collect the balls as fast as
+ * possible.
+ *
+ * This solution uses preprogrammed way to collect as many balls as possible.
+ * We have created an adaptive version as well, however since the aim of the robot
+ * was to collect the balls as fast as possible and the sonar reading were not
+ * accurate enought, we have decided to use a pregrommed solution instead and focus
+ * on speed and calibrating our control library.
+ *
+ * (Created as part of 5CCS2RGP Robotic Group Project module at King's College London)
+ *
+ * @copyright   Copyright (c) 2013 Tomas Vitek, Josh Manuncia, Oluwasheun Adebari
+ * @author      Tomas Vitek ~ http://tomasvitek.com
+ * @link        https://github.com/tomikvitek/NXC-Robot-Controllers
+ * @link        http://youtu.be/1ET_u_lVuE0
+ * @link        http://www.kcl.ac.uk/nms/depts/informatics/study/current/handbook/Progs/Modules/5CCS2RGP.aspx
+ */
+
+// Include control library
+#include "controls.nxc"
+
+/**
+ * Ball collecting thread.
+ *
+ * Utilises control library subroutines and
+ * leads the robot in preprogrammed way
+ * to collect as many balls as possible.
+ */
+task Collect()
+{
+  BeltOn();
+
+  GoDistance(12);
+  Turn(40);
+
+  GoForward(FORWARD_SPEED_SLOW);
+
+  // 1. ball
+  WaitForNextBall();
+
+  GoDistance(4);
+  StopWheels();
+
+  Turn(90);
+
+  GoForward(FORWARD_SPEED_SLOW);
+
+  // 2. ball
+  WaitForNextBall();
+
+  GoForward(FORWARD_SPEED_SLOW);
+  Wait(300);
+  AlignToWall();
+
+  GoDistance(-2);
+  StopWheels();
+  Turn(-45);
+  StopWheels();
+
+  GoDistance(2);
+  StopWheels();
+
+  Turn(-30);
+  StopWheels();
+
+  GoDistance(35);
+  StopWheels();
+
+  // 3. ball
+  Turn(10);
+  GoDistance(-27);
+  StopWheels();
+
+  Turn(90);
+  AlignToWall();
+
+  GoDistance(-3);
+  Turn(-38);
+  StopWheels();
+
+  GoDistance(-18);
+
+  Turn(-95);
+
+  Unload();
+
+  GoDistance(30);
+  Turn(-92);
+
+  GoForward(FORWARD_SPEED_SLOW);
+
+  // 4. ball
+  WaitForNextBall();
+
+  GoDistance(6);
+  Turn(-40);
+
+  GoForward(FORWARD_SPEED_SLOW);
+
+  // 5. ball
+  WaitForNextBall();
+
+  AlignToWall();
+
+  GoDistance(-2);
+  Turn(90);
+
+  GoForward(FORWARD_SPEED_SLOW);
+
+  // 6. ball
+  WaitForNextBall();
+
+  Turn(15);
+
+  GoForward(FORWARD_SPEED_SLOW);
+
+  // 7. ball
+  WaitForNextBall();
+
+  AlignToWall();
+
+  StopWheels();
+
+  MoveToSide();
+
+  GoDistance(-45);
+
+  Turn(25);
+
+  GoDistance(13);
+
+  Turn(40);
+
+  GoDistance(22);
+
+  // 8. ball
+
+  Turn(90);
+
+  // 9. ball
+  GoDistance(40);
+  Wait(500);
+  GoDistance(-3);
+
+  Turn(-83);
+
+  Unload();
+
+  GoDistance(48);
+  Turn(90);
+
+  GoDistance(38);
+
+  // 10. ball
+  StopWheels();
+  Wait(300);
+
+  Turn(6);
+  StopWheels();
+
+  GoForward(FORWARD_SPEED_SLOW);
+  Wait(2000);
+
+  // 11. ball
+  StopWheels();
+
+  GoDistance(-63);
+
+  Turn(-85);
+
+  Unload();
+
+  GoDistance(15);
+
+  Turn(800);
+
+  StopWheels();
+
+  BeltOff();
+
+  // Sound already included in robot's memory by default
+  PlayFileEx("! Startup.rso", 4, false);
+
+  // WELL DONE :)
+}
+
+/**
+ * Main task
+ *
+ * Starts counting and collecting threads.
+ */
+task main()
+{
+  Precedes(Count, Collect);
+}
