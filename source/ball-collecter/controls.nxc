@@ -248,7 +248,7 @@ task Count()
     while (true) {
       if (Sensor(COLLECT_SENSOR) == 1) break;
     }
-	  ballsCollected++;
+	ballsCollected++;
     PrintBallsCount();
     // Play a sound
     PlayFileEx("yay.rso", 4, false);

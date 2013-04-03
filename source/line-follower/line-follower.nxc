@@ -88,7 +88,7 @@ sub FollowLine()
 
           long time = CurrentTick() - start;
 
-		  // Continue
+          // Continue
           if (time < nextChange) {
             switch(current) {
               case 1:
@@ -99,7 +99,7 @@ sub FollowLine()
                 break;
             }
           }
-		  // Switch to other controller
+          // Switch to other controller
           else {
             switch(current) {
               case 1:
