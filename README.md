@@ -5,10 +5,10 @@ Aim of this project was to design and build robots for ball collecting and line 
 ## Photos
 
 ### Ball Collector
-![/photos/collecting.jpg]
+![Ball Collector](/photos/collecting.jpg)
 
 ### Line Follower
-![/photos/following]
+![Line Follower](/photos/following.jpg)
 
 ## Videos
 ### Ball Collector
